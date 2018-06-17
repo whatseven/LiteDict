@@ -31,57 +31,6 @@ from UI.UI_MainWindow import Ui_MainWindow
 from ext import *
 
 
-class MyHTMLParser(HTMLParser):
-    def __init__(self):
-        super(MyHTMLParser, self).__init__()
-        self.data = ''
-
-    def handle_starttag(self, tag, attrs):
-        """
-        recognize start tag, like <div>
-        :param tag:
-        :param attrs:
-        :return:
-        """
-        # print("Encountered a start tag:", tag)
-
-    def handle_endtag(self, tag):
-        """
-        recognize end tag, like </div>
-        :param tag:
-        :return:
-        """
-        # print("Encountered an end tag :", tag)
-
-    def handle_data(self, data):
-        """
-        recognize data, html content string
-        :param data:
-        :return:text
-        """
-        if '•' in data:
-            if not re.search(r"[a-zA-Z]", data):
-                if not len(data)<4:
-                    self.data += data + '\n'
-
-    def handle_startendtag(self, tag, attrs):
-        """
-        recognize tag that without endtag, like <img />
-        :param tag:
-        :param attrs:
-        :return:
-        """
-        # print("Encountered startendtag :", tag)
-
-    def handle_comment(self, data):
-        """
-
-        :param data:
-        :return:
-        """
-        # print("Encountered comment :", data)
-
-
 class CGlobalHotKCListener(QThread):
     addTrigger = pyqtSignal()
     cancelTrigger = pyqtSignal()
@@ -182,6 +131,7 @@ class TrayIcon(QSystemTrayIcon):
 Transaction process
 """
 
+"""
 def ServerProcess():
     ServerSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     ServerSocket.bind((HOST, PORT))
@@ -242,13 +192,14 @@ def ServerProcess():
 
         ClientConnection.sendall(ResultTransaction.encode())
         ClientConnection.close()
+"""
 
 class CMainApplication(Ui_MainWindow, QtWidgets.QMainWindow):
     def __init__(self):
         super(CMainApplication, self).__init__()
         #Transaction Process
-        self.p = Process(target=ServerProcess)
-        self.p.start()
+        #self.p = Process(target=ServerProcess)
+        #self.p.start()
 
         self.setupUi(self)
         # # Flask's pid
@@ -361,13 +312,10 @@ class CMainApplication(Ui_MainWindow, QtWidgets.QMainWindow):
                 text = str.lower(text)
 
                 # Find the transaction
-                ClientSocket=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-                ClientSocket.connect(("localhost",PORT))
-                ClientSocket.send(text.encode())
 
-                TransactionData=ClientSocket.recv(10240).decode()
-                self.__transaction = TransactionData
-                # self.__transaction = r.text
+                TransactionRequest=requests.post("http://111.231.116.139:5000/transaction"
+                                                  ,data={'word':text})
+                self.__transaction = json.loads(TransactionRequest.text)
                 self.__word = text
 
                 # Show the transaction window
@@ -474,7 +422,7 @@ class CMainApplication(Ui_MainWindow, QtWidgets.QMainWindow):
         self.__transactionWidget.statusLabel.setText("Search Mode")
 
     def __bQuit(self):
-        self.p.terminate()
+        #self.p.terminate()
         self.tray.setVisible(False)
         # self.tray.close()
         self.__transactionWidget.close()
