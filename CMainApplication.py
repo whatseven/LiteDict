@@ -283,7 +283,7 @@ class CMainApplication(Ui_MainWindow, QtWidgets.QMainWindow):
 
             if reply == QMessageBox.No:
                 return
-            win32api.keybd_event(18,0,0,0)      # Alt
+            win32api.keybd_event(18,0,0,0)     # Alt
             win32api.keybd_event(27,0,0,0)     # F
             win32api.keybd_event(27,0,win32con.KEYEVENTF_KEYUP,0)  #释放按键
             win32api.keybd_event(18,0,win32con.KEYEVENTF_KEYUP,0)
@@ -387,12 +387,12 @@ class CMainApplication(Ui_MainWindow, QtWidgets.QMainWindow):
         self.statusbar.showMessage("Successful!")
 
     def __saveData(self, vWord, vTransaction, vDescription):
-        cn = sqlite3.connect(WORDRECORD)
-        cu = cn.cursor()
-        cu.execute("INSERT INTO record (word, wordTransaction, description, insertTime) "
-                   "VALUES (?,?,?,?)", (vWord, vTransaction, vDescription, time.time()))
-        cn.commit()
-        cn.close()
+        SavaDataStatus=requests.post("http://111.231.116.139:5000/add"
+                                         ,data={'word':vWord,'transaction':vTransaction,'description':vDescription})
+        if SavaDataStatus=='ok':
+            return True
+        else:
+            return False
 
     def __bCancelTransaction(self):
         self.__transactionWidget.close()
