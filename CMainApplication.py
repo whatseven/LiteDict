@@ -22,7 +22,8 @@ import win32con
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QApplication, QMessageBox, QSystemTrayIcon, QMenu, QAction, qApp
+from PyQt5.QtWidgets import QApplication, QMessageBox, QSystemTrayIcon, QMenu, QAction, qApp, QAbstractItemView, \
+    QTableWidgetItem
 from flask import Flask
 
 from CTransaction import CTransaction
@@ -81,7 +82,6 @@ class CGlobalHotKCListener(QThread):
 
         finally:
             self.cancelHotKey()
-
 
 class TrayIcon(QSystemTrayIcon):
     switchTrigger = pyqtSignal()
@@ -229,6 +229,12 @@ class CMainApplication(Ui_MainWindow, QtWidgets.QMainWindow):
         self.__transactionWidget = CTransaction()
         self.__transactionWidget.cancelSignal.connect(self.__bCancelTransaction)
 
+        # Database widget showed?
+        self.databaseShowed=True
+
+        # Init the database
+        self.__initDatabase()
+
         self.initUI()
 
     def closeEvent(self, *args, **kwargs):
@@ -238,24 +244,9 @@ class CMainApplication(Ui_MainWindow, QtWidgets.QMainWindow):
         # self.setGeometry(300, 300, 300, 220)
         self.setWindowTitle('Dict')
 
-        NowTime=time.time()
-        Midnight=NowTime-NowTime%86400
-        cn=sqlite3.connect(WORDRECORD)
-        cu=cn.cursor()
-        cu.execute('SELECT * FROM record')
-        res=cu.fetchall()
-        TotalCount=len(res)
-        cu.execute('SELECT * FROM record WHERE insertTime>?',(Midnight,))
-        res=cu.fetchall()
-        TodayCount=len(res)
-        cu.execute("SELECT * FROM record WHERE alreadyOut='false' ")
-        res=cu.fetchall()
-        IncrementCount=len(res)
-        cn.close()
-        self.incrementLine.setText(str(IncrementCount))
-        self.todayLine.setText(str(TodayCount))
-        self.totalLine.setText(str(TotalCount))
+        self.__initCounts()
 
+        #self.setMouseTracking(True)
         self.addClipbordListener()
         self.show()
         # self.hide()
@@ -300,6 +291,8 @@ class CMainApplication(Ui_MainWindow, QtWidgets.QMainWindow):
             self.totalLine.setText(str(int(self.totalLine.text())+1))
             self.__bCancelDescription()
             self.__globalHotKCListener.start()
+
+            self.__initDatabase()
         else:
             try:
                 # Get the text in clipboard
@@ -313,7 +306,7 @@ class CMainApplication(Ui_MainWindow, QtWidgets.QMainWindow):
 
                 # Find the transaction
 
-                TransactionRequest=requests.post("http://111.231.116.139:5000/transaction"
+                TransactionRequest=requests.post(HOST+"/transaction"
                                                   ,data={'word':text})
                 self.__transaction = json.loads(TransactionRequest.text)
                 self.__word = text
@@ -386,8 +379,135 @@ class CMainApplication(Ui_MainWindow, QtWidgets.QMainWindow):
         cn.close()
         self.statusbar.showMessage("Successful!")
 
+    def displayButtonPushed(self):
+        if self.databaseShowed:
+            self.databaseWidget.hide()
+            self.databaseShowed=not self.databaseShowed
+            self.displayButton.setText(">>")
+            self.resize(500,650)
+        else:
+            self.databaseWidget.show()
+            self.databaseShowed=not self.databaseShowed
+            self.displayButton.setText("<<")
+            self.resize(1200,650)
+
+    def uploadButtonPushed(self):
+        with open(WORDRECORD,"rb") as File:
+            data=File.read()
+        if requests.post(HOST+"/upload",data=data).status_code==200:
+            self.statusbar.showMessage("Upload successful")
+        else:
+            self.statusbar.showMessage("Upload Error")
+
+    def downloadButtonPushed(self):
+        self.__synchronize()
+
+    def removeButtonPushed(self):
+        if self.databaseWidget.currentRow()==-1:
+            pass
+        RemoveLists=[]
+        for SelectedRange in self.databaseWidget.selectedRanges():
+            for SelectIndex in range(SelectedRange.rowCount()):
+                Word=self.databaseWidget.item(SelectedRange.topRow()+SelectIndex,2).text()
+                try:
+                    requests.post(HOST+"/remove",data={'word':Word})
+                except:
+                    self.statusbar.showMessage("No network!")
+                # Remove
+                cn = sqlite3.connect(WORDRECORD)
+                cu = cn.cursor()
+                cu.execute('delete from record where word=?',(Word,))
+                cn.commit()
+                cn.close()
+                RemoveLists.append(SelectedRange.topRow()+SelectIndex)
+        RemoveLists.sort(reverse=True)
+        for RowIndex in RemoveLists:
+            self.databaseWidget.removeRow(RowIndex)
+
+        self.__initCounts()
+
+    def __synchronize(self):
+        try:
+            response=requests.get(HOST+"/download",timeout=10)
+            if response.status_code!=200:
+                QMessageBox.information(self,
+                                        "Warning",
+                                        "Can't synchronize with remote database, using local mode",
+                                        QMessageBox.Yes)
+            else:
+                with open(WORDRECORD,'wb') as TargetFile:
+                    TargetFile.write(response.content)
+                self.statusbar.showMessage("Synchronize Successful")
+        except:
+            QMessageBox.information(self,
+                                    "Warning",
+                                    "Can't synchronize with remote database, using local mode",
+                                    QMessageBox.Yes)
+
+    def __initCounts(self):
+        NowTime=time.time()
+        Midnight=NowTime-NowTime%86400
+        cn=sqlite3.connect(WORDRECORD)
+        cu=cn.cursor()
+        cu.execute('SELECT * FROM record')
+        res=cu.fetchall()
+        TotalCount=len(res)
+        cu.execute('SELECT * FROM record WHERE insertTime>?',(Midnight,))
+        res=cu.fetchall()
+        TodayCount=len(res)
+        cu.execute("SELECT * FROM record WHERE alreadyOut='false' ")
+        res=cu.fetchall()
+        IncrementCount=len(res)
+        cn.close()
+        self.incrementLine.setText(str(IncrementCount))
+        self.todayLine.setText(str(TodayCount))
+        self.totalLine.setText(str(TotalCount))
+
+    def __initDatabase(self):
+        self.databaseWidget.clear()
+        self.databaseWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.databaseWidget.setSelectionBehavior(QAbstractItemView.SelectRows)
+
+        # Synchronize
+        self.__synchronize()
+
+        cn=sqlite3.connect(WORDRECORD)
+        cu=cn.cursor()
+
+        # Get the record
+        cu.execute("select insertTime,proficiency,word,description,wordTransaction from record")
+        reses=cu.fetchall()
+        self.databaseWidget.setRowCount(len(reses))
+        self.databaseWidget.setColumnCount(5)
+        self.databaseWidget.setHorizontalHeaderItem(0,QTableWidgetItem("Date"))
+        self.databaseWidget.setHorizontalHeaderItem(1,QTableWidgetItem("P"))
+        self.databaseWidget.setHorizontalHeaderItem(2,QTableWidgetItem("Word"))
+        self.databaseWidget.setHorizontalHeaderItem(3,QTableWidgetItem("D"))
+        self.databaseWidget.setHorizontalHeaderItem(4,QTableWidgetItem("Transaction"))
+        Header = self.databaseWidget.horizontalHeader()
+        Header.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
+        Header.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
+        Header.setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeToContents)
+        Header.setSectionResizeMode(4, QtWidgets.QHeaderView.ResizeToContents)
+        index=0
+        for res in reses:
+            self.databaseWidget.setItem(index,0,QTableWidgetItem(
+                time.strftime("%m-%d", time.localtime(res[0]))))  # Date
+            self.databaseWidget.setItem(index,1,QTableWidgetItem(str(res[1]))) # Proficiency
+            self.databaseWidget.setItem(index,2,QTableWidgetItem(res[2])) #Word
+            self.databaseWidget.setItem(index,3,QTableWidgetItem(res[3])) #wordTransaction
+            self.databaseWidget.setItem(index,4,QTableWidgetItem(res[4])) #description
+
+            index+=1
+        cn.close()
+
+        # Display details signals
+        for x in range(self.databaseWidget.rowCount()):
+            self.databaseWidget.item(x,3).setToolTip(self.databaseWidget.item(x,3).text())
+            self.databaseWidget.item(x,4).setToolTip(self.databaseWidget.item(x,4).text())
+
     def __saveData(self, vWord, vTransaction, vDescription):
-        SavaDataStatus=requests.post("http://111.231.116.139:5000/add"
+        SavaDataStatus=requests.post(HOST+"/add"
                                          ,data={'word':vWord,'transaction':vTransaction,'description':vDescription})
         if SavaDataStatus=='ok':
             return True

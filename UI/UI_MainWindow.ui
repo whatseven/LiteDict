@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>408</width>
-    <height>290</height>
+    <width>1200</width>
+    <height>650</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,8 +17,8 @@
    <widget class="QLabel" name="incrementLabel">
     <property name="geometry">
      <rect>
-      <x>30</x>
-      <y>50</y>
+      <x>40</x>
+      <y>150</y>
       <width>91</width>
       <height>20</height>
      </rect>
@@ -30,8 +30,8 @@
    <widget class="QLabel" name="todatLabel">
     <property name="geometry">
      <rect>
-      <x>30</x>
-      <y>90</y>
+      <x>40</x>
+      <y>190</y>
       <width>91</width>
       <height>20</height>
      </rect>
@@ -43,8 +43,8 @@
    <widget class="QLabel" name="totalLabel">
     <property name="geometry">
      <rect>
-      <x>31</x>
-      <y>130</y>
+      <x>41</x>
+      <y>230</y>
       <width>91</width>
       <height>20</height>
      </rect>
@@ -56,8 +56,8 @@
    <widget class="QPushButton" name="incrementButton">
     <property name="geometry">
      <rect>
-      <x>30</x>
-      <y>180</y>
+      <x>40</x>
+      <y>280</y>
       <width>93</width>
       <height>51</height>
      </rect>
@@ -69,8 +69,8 @@
    <widget class="QPushButton" name="todayButton">
     <property name="geometry">
      <rect>
-      <x>160</x>
-      <y>180</y>
+      <x>170</x>
+      <y>280</y>
       <width>93</width>
       <height>51</height>
      </rect>
@@ -82,8 +82,8 @@
    <widget class="QPushButton" name="totalButton">
     <property name="geometry">
      <rect>
-      <x>290</x>
-      <y>180</y>
+      <x>300</x>
+      <y>280</y>
       <width>93</width>
       <height>51</height>
      </rect>
@@ -95,8 +95,8 @@
    <widget class="QLineEdit" name="incrementLine">
     <property name="geometry">
      <rect>
-      <x>160</x>
-      <y>50</y>
+      <x>170</x>
+      <y>150</y>
       <width>221</width>
       <height>21</height>
      </rect>
@@ -108,8 +108,8 @@
    <widget class="QLineEdit" name="todayLine">
     <property name="geometry">
      <rect>
-      <x>160</x>
-      <y>90</y>
+      <x>170</x>
+      <y>190</y>
       <width>221</width>
       <height>21</height>
      </rect>
@@ -121,14 +121,79 @@
    <widget class="QLineEdit" name="totalLine">
     <property name="geometry">
      <rect>
-      <x>160</x>
-      <y>130</y>
+      <x>170</x>
+      <y>230</y>
       <width>221</width>
       <height>21</height>
      </rect>
     </property>
     <property name="readOnly">
      <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="displayButton">
+    <property name="geometry">
+     <rect>
+      <x>410</x>
+      <y>180</y>
+      <width>51</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;&lt;</string>
+    </property>
+   </widget>
+   <widget class="QTableWidget" name="databaseWidget">
+    <property name="geometry">
+     <rect>
+      <x>570</x>
+      <y>0</y>
+      <width>631</width>
+      <height>591</height>
+     </rect>
+    </property>
+    <property name="toolTipDuration">
+     <number>-1</number>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="toolButton">
+    <property name="geometry">
+     <rect>
+      <x>510</x>
+      <y>130</y>
+      <width>31</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Dw</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="toolButton_2">
+    <property name="geometry">
+     <rect>
+      <x>510</x>
+      <y>30</y>
+      <width>31</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>-</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="toolButton_3">
+    <property name="geometry">
+     <rect>
+      <x>510</x>
+      <y>80</y>
+      <width>31</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>UP</string>
     </property>
    </widget>
   </widget>
@@ -138,7 +203,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>408</width>
+     <width>1200</width>
      <height>26</height>
     </rect>
    </property>
@@ -154,7 +219,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>80</x>
-     <y>231</y>
+     <y>306</y>
     </hint>
     <hint type="destinationlabel">
      <x>85</x>
@@ -170,7 +235,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>202</x>
-     <y>235</y>
+     <y>306</y>
     </hint>
     <hint type="destinationlabel">
      <x>271</x>
@@ -186,11 +251,75 @@
    <hints>
     <hint type="sourcelabel">
      <x>332</x>
-     <y>236</y>
+     <y>306</y>
     </hint>
     <hint type="destinationlabel">
      <x>341</x>
      <y>37</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>displayButton</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>displayButtonPushed()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>444</x>
+     <y>206</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>469</x>
+     <y>72</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>toolButton</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>downloadButtonPushed()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>929</x>
+     <y>176</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>931</x>
+     <y>264</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>toolButton_2</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>removeButtonPushed()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>929</x>
+     <y>76</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>933</x>
+     <y>316</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>toolButton_3</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>uploadButtonPushed()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>922</x>
+     <y>126</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>929</x>
+     <y>346</y>
     </hint>
    </hints>
   </connection>
@@ -199,5 +328,9 @@
   <slot>incrementButtonPushed()</slot>
   <slot>todayButtonPushed()</slot>
   <slot>totalButtonPushed()</slot>
+  <slot>displayButtonPushed()</slot>
+  <slot>uploadButtonPushed()</slot>
+  <slot>removeButtonPushed()</slot>
+  <slot>downloadButtonPushed()</slot>
  </slots>
 </ui>

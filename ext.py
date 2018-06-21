@@ -9,4 +9,4 @@ INDEXDBPATH = os.path.join(BASEDIR,"resources/indexDb")
 WORDRECORD = os.path.join(BASEDIR,"resources/recordDB.db")
 EXPORTPATH = os.path.join(BASEDIR,"export/")
 
-HOST, PORT = '', 7001
+HOST = 'http://111.231.116.139:7005'
