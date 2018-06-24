@@ -157,24 +157,11 @@
      <number>-1</number>
     </property>
    </widget>
-   <widget class="QToolButton" name="toolButton">
-    <property name="geometry">
-     <rect>
-      <x>510</x>
-      <y>130</y>
-      <width>31</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Dw</string>
-    </property>
-   </widget>
    <widget class="QToolButton" name="toolButton_2">
     <property name="geometry">
      <rect>
       <x>510</x>
-      <y>30</y>
+      <y>60</y>
       <width>31</width>
       <height>31</height>
      </rect>
@@ -187,13 +174,26 @@
     <property name="geometry">
      <rect>
       <x>510</x>
-      <y>80</y>
+      <y>110</y>
       <width>31</width>
       <height>31</height>
      </rect>
     </property>
     <property name="text">
-     <string>UP</string>
+     <string>SY</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="toolButton_4">
+    <property name="geometry">
+     <rect>
+      <x>510</x>
+      <y>10</y>
+      <width>31</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>+</string>
     </property>
    </widget>
   </widget>
@@ -276,30 +276,14 @@
    </hints>
   </connection>
   <connection>
-   <sender>toolButton</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>downloadButtonPushed()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>929</x>
-     <y>176</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>931</x>
-     <y>264</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>toolButton_2</sender>
    <signal>clicked()</signal>
    <receiver>MainWindow</receiver>
    <slot>removeButtonPushed()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>929</x>
-     <y>76</y>
+     <x>540</x>
+     <y>86</y>
     </hint>
     <hint type="destinationlabel">
      <x>933</x>
@@ -311,15 +295,31 @@
    <sender>toolButton_3</sender>
    <signal>clicked()</signal>
    <receiver>MainWindow</receiver>
-   <slot>uploadButtonPushed()</slot>
+   <slot>synchronizeButtonPushed()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>922</x>
-     <y>126</y>
+     <x>540</x>
+     <y>136</y>
     </hint>
     <hint type="destinationlabel">
      <x>929</x>
      <y>346</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>toolButton_4</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>addWordsButtonPushed()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>521</x>
+     <y>50</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>552</x>
+     <y>406</y>
     </hint>
    </hints>
   </connection>
@@ -329,8 +329,8 @@
   <slot>todayButtonPushed()</slot>
   <slot>totalButtonPushed()</slot>
   <slot>displayButtonPushed()</slot>
-  <slot>uploadButtonPushed()</slot>
+  <slot>synchronizeButtonPushed()</slot>
   <slot>removeButtonPushed()</slot>
-  <slot>downloadButtonPushed()</slot>
+  <slot>addWordsButtonPushed()</slot>
  </slots>
 </ui>

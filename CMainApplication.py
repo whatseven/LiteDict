@@ -1,4 +1,5 @@
 # coding = utf-8
+import codecs
 import ctypes
 import hashlib
 import json
@@ -14,20 +15,22 @@ from ctypes import wintypes
 from html.parser import HTMLParser
 from multiprocessing import Process
 
+import keyboard
 import requests
 import win32api
 import win32com
 import win32com.client
 import win32con
-from PyQt5 import QtWidgets
-from PyQt5.QtCore import QThread, pyqtSignal
-from PyQt5.QtGui import QIcon
+from PyQt5 import QtWidgets, QtCore
+from PyQt5.QtCore import QThread, pyqtSignal, QPoint
+from PyQt5.QtGui import QIcon, QCursor
 from PyQt5.QtWidgets import QApplication, QMessageBox, QSystemTrayIcon, QMenu, QAction, qApp, QAbstractItemView, \
-    QTableWidgetItem
+    QTableWidgetItem, QFileDialog, QDesktopWidget
 from flask import Flask
 
 from CTransaction import CTransaction
 from MDXTools.mdict_query import IndexBuilder
+from MyHtmlParser import MyHTMLParser
 from UI.UI_MainWindow import Ui_MainWindow
 from ext import *
 
@@ -38,18 +41,19 @@ class CGlobalHotKCListener(QThread):
 
     def __init__(self):
         super(CGlobalHotKCListener, self).__init__()
-        self.byref = ctypes.byref
-        self.user32 = ctypes.windll.user32
 
-        self.HOTKEYS = {
-            1: (ord('D'), win32con.MOD_CONTROL),
-            2: (ord('S'), win32con.MOD_CONTROL)
-        }
-
-        self.HOTKEY_ACTIONS = {
-            1: self.handle_crtl_d,
-            2: self.handle_crtl_s
-        }
+        # self.byref = ctypes.byref
+        # self.user32 = ctypes.windll.user32
+        #
+        # self.HOTKEYS = {
+        #     1: (ord('D'), win32con.MOD_CONTROL),
+        #     2: (ord('S'), win32con.MOD_CONTROL)
+        # }
+        #
+        # self.HOTKEY_ACTIONS = {
+        #     1: self.handle_crtl_d,
+        #     2: self.handle_crtl_s
+        # }
 
     def handle_crtl_d(self):
         self.addTrigger.emit()
@@ -60,28 +64,32 @@ class CGlobalHotKCListener(QThread):
         return True
 
     def cancelHotKey(self):
-        for id in self.HOTKEYS.keys():
-            self.user32.UnregisterHotKey(None, id)
+        # for id in self.HOTKEYS.keys():
+        #     self.user32.UnregisterHotKey(None, id)
+        keyboard.remove_all_hotkeys()
+
 
     def run(self):
-        for id, (vk, modifiers) in self.HOTKEYS.items():
-            print("Registering id", id, "for key", vk)
-            if not self.user32.RegisterHotKey(None, id, modifiers, vk):
-                print("Unable to register id", id)
-
-        try:
-            msg = wintypes.MSG()
-            while self.user32.GetMessageA(self.byref(msg), None, 0, 0) != 0:
-                if msg.message == win32con.WM_HOTKEY:
-                    action_to_take = self.HOTKEY_ACTIONS.get(msg.wParam)
-                    if action_to_take:
-                        action_to_take()
-
-                self.user32.TranslateMessage(self.byref(msg))
-                self.user32.DispatchMessageA(self.byref(msg))
-
-        finally:
-            self.cancelHotKey()
+        keyboard.add_hotkey('ctrl+d',self.handle_crtl_d)
+        keyboard.add_hotkey('ctrl+s',self.handle_crtl_s)
+        # for id, (vk, modifiers) in self.HOTKEYS.items():
+        #     print("Registering id", id, "for key", vk)
+        #     if not self.user32.RegisterHotKey(None, id, modifiers, vk):
+        #         print("Unable to register id", id)
+        #
+        # try:
+        #     msg = wintypes.MSG()
+        #     while self.user32.GetMessageA(self.byref(msg), None, 0, 0) != 0:
+        #         if msg.message == win32con.WM_HOTKEY:
+        #             action_to_take = self.HOTKEY_ACTIONS.get(msg.wParam)
+        #             if action_to_take:
+        #                 action_to_take()
+        #
+        #         self.user32.TranslateMessage(self.byref(msg))
+        #         self.user32.DispatchMessageA(self.byref(msg))
+        #
+        # finally:
+        #     self.cancelHotKey()
 
 class TrayIcon(QSystemTrayIcon):
     switchTrigger = pyqtSignal()
@@ -197,13 +205,8 @@ def ServerProcess():
 class CMainApplication(Ui_MainWindow, QtWidgets.QMainWindow):
     def __init__(self):
         super(CMainApplication, self).__init__()
-        #Transaction Process
-        #self.p = Process(target=ServerProcess)
-        #self.p.start()
 
         self.setupUi(self)
-        # # Flask's pid
-        # self.serverPID = pid
 
         # Tray Menu
         self.tray = TrayIcon(self)
@@ -215,6 +218,7 @@ class CMainApplication(Ui_MainWindow, QtWidgets.QMainWindow):
         self.__switch = True
 
         # Hotkey listener
+
         self.__globalHotKCListener = CGlobalHotKCListener()
         self.__globalHotKCListener.start()
         self.__globalHotKCListener.addTrigger.connect(self.__bStartDescription)
@@ -244,7 +248,11 @@ class CMainApplication(Ui_MainWindow, QtWidgets.QMainWindow):
         # self.setGeometry(300, 300, 300, 220)
         self.setWindowTitle('Dict')
 
-        self.__initCounts()
+        # AX
+        self.__transactionWidget.transactionAx.setControl(u"{8856F961-340A-11D0-A96B-00C04FD705A2}")
+        # self.transactionAx.setFocusPolicy(Qt::StrongFocus);//设置控件接收键盘焦点的方式：鼠标单击、Tab键
+        self.__transactionWidget.transactionAx.setProperty("DisplayAlerts",False) # 不显示任何警告信息。
+        self.__transactionWidget.transactionAx.setProperty("DisplayScrollBars",True) # 显示滚动条
 
         #self.setMouseTracking(True)
         self.addClipbordListener()
@@ -305,20 +313,34 @@ class CMainApplication(Ui_MainWindow, QtWidgets.QMainWindow):
                 text = str.lower(text)
 
                 # Find the transaction
+                Transaction=self.__transact(text)
 
-                TransactionRequest=requests.post(HOST+"/transaction"
-                                                  ,data={'word':text})
-                self.__transaction = json.loads(TransactionRequest.text)
+                self.__transaction = Transaction
                 self.__word = text
 
+                File=codecs.open('index.html','w','utf-8')
+                File.write(Transaction)
+                File.close()
+
                 # Show the transaction window
-                self.__transactionWidget.wordLabel.setText(self.__word)
-                self.__transactionWidget.transactionBrowser.setText(self.__transaction)
+                # self.__transactionWidget.transactionBrowser.setText(self.__transaction)
+                self.__transactionWidget.transactionAx.dynamicCall("Navigate(\"F:/repos/Dict/index.html\")")
                 self.__transactionWidget.statusLabel.setText("Search Mode")
+                CursurPoint = QCursor.pos()
+                desktopWidget = QApplication.desktop();
+                DesktopPoint=desktopWidget.availableGeometry()
+                if CursurPoint.x()+620>DesktopPoint.width():
+                    CursurPoint.setX(DesktopPoint.width()-620)
+                if CursurPoint.y()+400>DesktopPoint.height():
+                    CursurPoint.setY(DesktopPoint.height()-400)
+                self.__transactionWidget.move(CursurPoint)
+                self.__transactionWidget.setWindowFlags(self.__transactionWidget.windowFlags() |QtCore.Qt.WindowStaysOnTopHint)
+                self.__transactionWidget.show()
+                self.__transactionWidget.setWindowFlags(QtCore.Qt.Widget)
                 self.__transactionWidget.show()
             except Exception as e:
                 print(e)
-            # self.__transactionWidget
+
 
     def incrementButtonPushed(self):
         cn=sqlite3.connect(WORDRECORD)
@@ -391,17 +413,6 @@ class CMainApplication(Ui_MainWindow, QtWidgets.QMainWindow):
             self.displayButton.setText("<<")
             self.resize(1200,650)
 
-    def uploadButtonPushed(self):
-        with open(WORDRECORD,"rb") as File:
-            data=File.read()
-        if requests.post(HOST+"/upload",data=data).status_code==200:
-            self.statusbar.showMessage("Upload successful")
-        else:
-            self.statusbar.showMessage("Upload Error")
-
-    def downloadButtonPushed(self):
-        self.__synchronize()
-
     def removeButtonPushed(self):
         if self.databaseWidget.currentRow()==-1:
             pass
@@ -426,23 +437,130 @@ class CMainApplication(Ui_MainWindow, QtWidgets.QMainWindow):
 
         self.__initCounts()
 
+    def addWordsButtonPushed(self):
+        FileName = QFileDialog.getOpenFileName(self,"select your words file","","Txt files(*.txt)")
+        Results= self.__parseImportWords(FileName[0])
+
+        # Add words to database
+        cn = sqlite3.connect(WORDRECORD)
+        cu = cn.cursor()
+        for Result in Results:
+            Word = Result.get('word')
+            Transaction = Result.get('transaction')
+            Description = ""
+
+            # Find if it is exist
+            cu.execute('select proficiency from record where word=?',(Word,))
+            res=cu.fetchone()
+            if res is None:
+                cu.execute("INSERT INTO record (word, wordTransaction, description, insertTime) "
+                           "VALUES (?,?,?,?)", (Word, Transaction, Description, time.time()))
+            else:
+                ProficiencyIncreament=100 if res[0]+25>100 else 100
+                cu.execute("update record set proficiency=? where word = ?",(ProficiencyIncreament,Word))
+
+        cn.commit()
+        cn.close()
+
+        self.__initDatabase()
+
+    def synchronizeButtonPushed(self):
+        self.__initDatabase()
+
+    def __parseImportWords(self,vFileName):
+        File = open(vFileName, 'r', encoding='UTF-16 LE', errors='ignore')
+        lines = File.readlines()
+        tempList = []
+        temp = ""
+        flag = 0
+
+        final = []
+        word = ""
+        transaction = ""
+
+        for line in lines:
+            line.encode("utf8")
+            if flag == 0:
+                pattern0 = re.compile(r'\ufeff(.*\n)')
+                match0 = pattern0.match(line)
+                temp += match0.group(1)
+            else:
+                pattern = re.compile(r'\d,')
+                match = pattern.match(line)
+                if match:
+                    tempList.append(temp)
+                    temp = ""
+                    temp += line
+                else:
+                    temp += line
+            flag += 1
+        tempList.append(temp)
+
+        for temp in tempList:
+            transaction = ""
+            pattern = re.compile(r'\d, (.*?)  (.*)\n')
+            match = pattern.match(temp)
+            word = match.group(1)
+            transction0 = match.group(2)
+            transaction += transction0 + "\n"
+
+            end = match.end()
+            translationLine = temp[end:]
+            translations = translationLine.split("\n\n")
+            length = len(translations)
+            for i in range(length):
+                tmp = translations[i].partition(".")
+                transaction += str(i+1) + ". [" + tmp[0] + "]" + tmp[2] + "\n"
+
+            element = {"word": word, "transaction": transaction}
+            final.append(element)
+        return final
+
+    def __transact(self,vWord):
+        try:
+            # Dict Parser
+            builder = IndexBuilder('MDXData/Oxford.mdx')
+            ResultWord = builder.mdx_lookup(vWord)
+
+            # Internet Based Transaction
+            if len(ResultWord) == 0:
+                TransactionRequest=requests.post(HOST+"/transaction"
+                                                 ,data={'word':vWord})
+                return json.loads(TransactionRequest.text)
+            # Using local dictionary
+            else:
+                parser = MyHTMLParser(ResultWord[0])
+                return parser.getData()
+
+        except Exception as e:
+            print(e)
+
     def __synchronize(self):
         try:
-            response=requests.get(HOST+"/download",timeout=10)
-            if response.status_code!=200:
+            response=requests.get(HOST+"/sychronize",timeout=10,data={"LocalTime":os.stat(WORDRECORD).st_mtime})
+            if response.status_code==200:
+                with open(WORDRECORD,'wb') as TargetFile:
+                    TargetFile.write(response.content)
+                self.statusbar.showMessage("Download Successful")
+            elif response.status_code==302:
+                with open(WORDRECORD,"rb") as File:
+                    data=File.read()
+                if requests.post(HOST+"/sychronize",data=data).status_code==200:
+                    self.statusbar.showMessage("Upload successful")
+                else:
+                    self.statusbar.showMessage("Upload Error")
+            else:
                 QMessageBox.information(self,
                                         "Warning",
                                         "Can't synchronize with remote database, using local mode",
                                         QMessageBox.Yes)
-            else:
-                with open(WORDRECORD,'wb') as TargetFile:
-                    TargetFile.write(response.content)
-                self.statusbar.showMessage("Synchronize Successful")
         except:
             QMessageBox.information(self,
                                     "Warning",
                                     "Can't synchronize with remote database, using local mode",
                                     QMessageBox.Yes)
+
+        self.__initCounts()
 
     def __initCounts(self):
         NowTime=time.time()
@@ -507,11 +625,24 @@ class CMainApplication(Ui_MainWindow, QtWidgets.QMainWindow):
             self.databaseWidget.item(x,4).setToolTip(self.databaseWidget.item(x,4).text())
 
     def __saveData(self, vWord, vTransaction, vDescription):
-        SavaDataStatus=requests.post(HOST+"/add"
-                                         ,data={'word':vWord,'transaction':vTransaction,'description':vDescription})
-        if SavaDataStatus=='ok':
+        try:
+            cn = sqlite3.connect(WORDRECORD)
+            cu = cn.cursor()
+
+            # Find if it is exist
+            cu.execute('select proficiency from record where word=?',(vWord,))
+            res=cu.fetchone()
+            if res is None:
+                cu.execute("INSERT INTO record (word, wordTransaction, description, insertTime) "
+                           "VALUES (?,?,?,?)", (vWord, vTransaction, vDescription, time.time()))
+            else:
+                ProficiencyIncreament=100 if res[0]+5>100 else 100
+                cu.execute("update record set proficiency=? where word = ?",(ProficiencyIncreament,vWord))
+            cn.commit()
+            cn.close()
+
             return True
-        else:
+        except Exception as e:
             return False
 
     def __bCancelTransaction(self):
@@ -542,6 +673,7 @@ class CMainApplication(Ui_MainWindow, QtWidgets.QMainWindow):
         self.__transactionWidget.statusLabel.setText("Search Mode")
 
     def __bQuit(self):
+        self.__initDatabase()
         #self.p.terminate()
         self.tray.setVisible(False)
         # self.tray.close()
