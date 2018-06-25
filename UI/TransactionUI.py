@@ -12,7 +12,7 @@ class Ui_Transaction(object):
     def setupUi(self, Transaction):
         Transaction.setObjectName("Transaction")
         Transaction.setWindowModality(QtCore.Qt.NonModal)
-        Transaction.resize(618, 403)
+        Transaction.resize(620, 400)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)

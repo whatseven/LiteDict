@@ -22,7 +22,7 @@ import win32com
 import win32com.client
 import win32con
 from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtCore import QThread, pyqtSignal, QPoint
+from PyQt5.QtCore import QThread, pyqtSignal, QPoint, QEvent
 from PyQt5.QtGui import QIcon, QCursor
 from PyQt5.QtWidgets import QApplication, QMessageBox, QSystemTrayIcon, QMenu, QAction, qApp, QAbstractItemView, \
     QTableWidgetItem, QFileDialog, QDesktopWidget
@@ -95,24 +95,24 @@ class TrayIcon(QSystemTrayIcon):
     switchTrigger = pyqtSignal()
     quitTrigger = pyqtSignal()
 
-    def __init__(self, parent=None):
-        super(TrayIcon, self).__init__(parent)
+    def __init__(self, vParent=None):
+        super(TrayIcon, self).__init__(vParent)
         self.switch = True
-        self.showMenu()
+        self.showMenu(vParent)
         self.other()
 
-    def showMenu(self):
+    def showMenu(self,vParent):
         # Menu
-        self.menu = QMenu()
+        self.menu = QMenu(vParent)
         self.switchAction = QAction("Close Transaction", self, triggered=self.switchSolve)
-        self.quitAction = QAction("退出", self, triggered=self.quit)
+        self.quitAction = QAction("Quit", self, triggered=self.quit)
 
         self.menu.addAction(self.switchAction)
         self.menu.addAction(self.quitAction)
         self.setContextMenu(self.menu)
 
     def other(self):
-        # self.activated.connect(self.iconClied)
+        self.activated.connect(self.iconClied)
         self.setIcon(QIcon("resources/ico.jpg"))
         self.icon = self.MessageIcon()
 
@@ -173,8 +173,14 @@ class CMainApplication(Ui_MainWindow, QtWidgets.QMainWindow):
 
         self.initUI()
 
-    def closeEvent(self, *args, **kwargs):
-        self.__bQuit()
+    def closeEvent(self, vEvent):
+        vEvent.ignore()
+        self.hide()
+
+    def hideEvent(self, vEvent):
+        self.tray.showMessage("title","hide in tray icon")
+        self.hide()
+        vEvent.ignore()
 
     def initUI(self):
         # self.setGeometry(300, 300, 300, 220)
@@ -189,6 +195,8 @@ class CMainApplication(Ui_MainWindow, QtWidgets.QMainWindow):
         #self.setMouseTracking(True)
         self.addClipbordListener()
         self.show()
+
+        # self.__transactionWidget.show()
         # self.hide()
 
     def addClipbordListener(self):
@@ -608,16 +616,20 @@ class CMainApplication(Ui_MainWindow, QtWidgets.QMainWindow):
         self.__transactionWidget.statusLabel.setText("Search Mode")
 
     def __bQuit(self):
+        self.__transactionWidget.close()
         self.__initDatabase()
         #self.p.terminate()
         self.tray.setVisible(False)
         # self.tray.close()
-        self.__transactionWidget.close()
         self.close()
         # qApp.__bQuit()
         sys.exit()
 
 if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    ex = CMainApplication()
-    sys.exit(app.exec_())
+    try:
+        app = QApplication(sys.argv)
+        ex = CMainApplication()
+        sys.exit(app.exec_())
+    except Exception as e:
+        print(e)
+

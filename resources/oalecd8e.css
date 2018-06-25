@@ -1187,6 +1187,12 @@ span.p-g span.n-g, span.ids-g span.n-g, span.n-g{
   padding-left: 20px;
 }
 
+span.count{
+  color: #888888;
+  position: absolute;
+  left: -20px;
+}
+
 span.p-g span.n-g:before, span.ids-g span.n-g:before, span.n-g:before {
   color: #888888;
   padding-right: 6px;
@@ -1194,8 +1200,8 @@ span.p-g span.n-g:before, span.ids-g span.n-g:before, span.n-g:before {
   text-align: right;
   left: -16px;
   width: 24px;
-  counter-increment: z_n;
-  content: counter(z_n);
+    /*counter-increment: z_n;*/
+    /*content: counter(z_n);*/
 }
 
 .z_n {
