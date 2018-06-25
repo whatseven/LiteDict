@@ -135,73 +135,6 @@ class TrayIcon(QSystemTrayIcon):
         # Quit
         self.quitTrigger.emit()
 
-"""
-Transaction process
-"""
-
-"""
-def ServerProcess():
-    ServerSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    ServerSocket.bind((HOST, PORT))
-    ServerSocket.listen(1)
-    print('Serving HTTP on port %s ...' % PORT)
-    while True:
-        ClientConnection, ClientAddress = ServerSocket.accept()
-        Word = ClientConnection.recv(10240).decode()
-        # Dict Parser
-        builder = IndexBuilder('MDXData/niujin.mdx')
-        ResultWord = builder.mdx_lookup(Word)
-        ResultTransaction=""
-        if len(ResultWord) == 0:
-            # # YouDao
-            # appKey = '4fd37dd83c3b4a86'
-            # secretKey = '0euicKCl8dubyDXbvwbgYDMF3Rt6TWGf'
-            # q = Word
-            # fromLang = 'EN'
-            # toLang = 'zh-CHS'
-            # salt = random.randint(1, 65536)
-            # sign = appKey + q + str(salt) + secretKey
-            # m1 = hashlib.md5()
-            # m1.update(sign.encode())
-            # sign = m1.hexdigest()
-            # r = requests.post("http://openapi.youdao.com/api"
-            #                   , data={"appKey": appKey
-            #         , "q": q
-            #         , "from": fromLang
-            #         , "to": toLang
-            #         , "salt": salt
-            #         , "sign": sign})
-            # result = json.loads(r.text)
-            # ResultTransaction = "From YouDao\n" + result["translation"][0]
-            # Baidu
-            appKey = '20180418000147886'
-            secretKey = '8tuKIpNnEoAOzrr8mrPn'
-            q = Word
-            fromLang = 'en'
-            toLang = 'zh'
-            salt = random.randint(32768, 65536)
-            sign = appKey + q + str(salt) + secretKey
-            m1 = hashlib.md5()
-            m1.update(sign.encode())
-            sign = m1.hexdigest()
-            r = requests.post("http://api.fanyi.baidu.com/api/trans/vip/translate"
-                              , data={"appid": appKey
-                    , "q": q
-                    , "from": fromLang
-                    , "to": toLang
-                    , "salt": salt
-                    , "sign": sign})
-            result = json.loads(r.text)
-            ResultTransaction = "From BaiDu\n" + result["trans_result"][0]['dst']
-        else:
-            parser = MyHTMLParser()
-            parser.feed(ResultWord[0])
-            ResultTransaction = parser.data
-
-        ClientConnection.sendall(ResultTransaction.encode())
-        ClientConnection.close()
-"""
-
 class CMainApplication(Ui_MainWindow, QtWidgets.QMainWindow):
     def __init__(self):
         super(CMainApplication, self).__init__()
@@ -317,7 +250,7 @@ class CMainApplication(Ui_MainWindow, QtWidgets.QMainWindow):
                 self.__transaction = Transaction
                 self.__word = text
 
-                File=codecs.open('index.html','w','utf-8')
+                File=codecs.open('resources/index.html','w','utf-8')
                 if Transaction[0]!='<':
                     File.write(HTMLSTATIC1+Transaction+HTMLSTATIC2)
                 else:
@@ -326,7 +259,7 @@ class CMainApplication(Ui_MainWindow, QtWidgets.QMainWindow):
 
                 # Show the transaction window
                 # self.__transactionWidget.transactionBrowser.setText(self.__transaction)
-                self.__transactionWidget.transactionAx.dynamicCall("Navigate(str)",BASEDIR+"/index.html")
+                self.__transactionWidget.transactionAx.dynamicCall("Navigate(str)",BASEDIR+"/resources/index.html")
                 self.__transactionWidget.statusLabel.setText("Search Mode")
                 CursurPoint = QCursor.pos()
                 desktopWidget = QApplication.desktop();
