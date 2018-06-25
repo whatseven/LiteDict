@@ -42,18 +42,18 @@ class CGlobalHotKCListener(QThread):
     def __init__(self):
         super(CGlobalHotKCListener, self).__init__()
 
-        # self.byref = ctypes.byref
-        # self.user32 = ctypes.windll.user32
-        #
-        # self.HOTKEYS = {
-        #     1: (ord('D'), win32con.MOD_CONTROL),
-        #     2: (ord('S'), win32con.MOD_CONTROL)
-        # }
-        #
-        # self.HOTKEY_ACTIONS = {
-        #     1: self.handle_crtl_d,
-        #     2: self.handle_crtl_s
-        # }
+        self.byref = ctypes.byref
+        self.user32 = ctypes.windll.user32
+
+        self.HOTKEYS = {
+            1: (ord('D'), win32con.MOD_CONTROL),
+            2: (ord('S'), win32con.MOD_CONTROL)
+        }
+
+        self.HOTKEY_ACTIONS = {
+            1: self.handle_crtl_d,
+            2: self.handle_crtl_s
+        }
 
     def handle_crtl_d(self):
         self.addTrigger.emit()
@@ -64,32 +64,32 @@ class CGlobalHotKCListener(QThread):
         return True
 
     def cancelHotKey(self):
-        # for id in self.HOTKEYS.keys():
-        #     self.user32.UnregisterHotKey(None, id)
-        keyboard.remove_all_hotkeys()
+        for id in self.HOTKEYS.keys():
+            self.user32.UnregisterHotKey(None, id)
+        # keyboard.remove_all_hotkeys()
 
 
     def run(self):
-        keyboard.add_hotkey('ctrl+d',self.handle_crtl_d)
-        keyboard.add_hotkey('ctrl+s',self.handle_crtl_s)
-        # for id, (vk, modifiers) in self.HOTKEYS.items():
-        #     print("Registering id", id, "for key", vk)
-        #     if not self.user32.RegisterHotKey(None, id, modifiers, vk):
-        #         print("Unable to register id", id)
-        #
-        # try:
-        #     msg = wintypes.MSG()
-        #     while self.user32.GetMessageA(self.byref(msg), None, 0, 0) != 0:
-        #         if msg.message == win32con.WM_HOTKEY:
-        #             action_to_take = self.HOTKEY_ACTIONS.get(msg.wParam)
-        #             if action_to_take:
-        #                 action_to_take()
-        #
-        #         self.user32.TranslateMessage(self.byref(msg))
-        #         self.user32.DispatchMessageA(self.byref(msg))
-        #
-        # finally:
-        #     self.cancelHotKey()
+        # keyboard.add_hotkey('ctrl+d',self.handle_crtl_d)
+        # keyboard.add_hotkey('ctrl+s',self.handle_crtl_s)
+        for id, (vk, modifiers) in self.HOTKEYS.items():
+            print("Registering id", id, "for key", vk)
+            if not self.user32.RegisterHotKey(None, id, modifiers, vk):
+                print("Unable to register id", id)
+
+        try:
+            msg = wintypes.MSG()
+            while self.user32.GetMessageA(self.byref(msg), None, 0, 0) != 0:
+                if msg.message == win32con.WM_HOTKEY:
+                    action_to_take = self.HOTKEY_ACTIONS.get(msg.wParam)
+                    if action_to_take:
+                        action_to_take()
+
+                self.user32.TranslateMessage(self.byref(msg))
+                self.user32.DispatchMessageA(self.byref(msg))
+
+        finally:
+            self.cancelHotKey()
 
 class TrayIcon(QSystemTrayIcon):
     switchTrigger = pyqtSignal()
@@ -135,73 +135,6 @@ class TrayIcon(QSystemTrayIcon):
         # Quit
         self.quitTrigger.emit()
 
-"""
-Transaction process
-"""
-
-"""
-def ServerProcess():
-    ServerSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    ServerSocket.bind((HOST, PORT))
-    ServerSocket.listen(1)
-    print('Serving HTTP on port %s ...' % PORT)
-    while True:
-        ClientConnection, ClientAddress = ServerSocket.accept()
-        Word = ClientConnection.recv(10240).decode()
-        # Dict Parser
-        builder = IndexBuilder('MDXData/niujin.mdx')
-        ResultWord = builder.mdx_lookup(Word)
-        ResultTransaction=""
-        if len(ResultWord) == 0:
-            # # YouDao
-            # appKey = '4fd37dd83c3b4a86'
-            # secretKey = '0euicKCl8dubyDXbvwbgYDMF3Rt6TWGf'
-            # q = Word
-            # fromLang = 'EN'
-            # toLang = 'zh-CHS'
-            # salt = random.randint(1, 65536)
-            # sign = appKey + q + str(salt) + secretKey
-            # m1 = hashlib.md5()
-            # m1.update(sign.encode())
-            # sign = m1.hexdigest()
-            # r = requests.post("http://openapi.youdao.com/api"
-            #                   , data={"appKey": appKey
-            #         , "q": q
-            #         , "from": fromLang
-            #         , "to": toLang
-            #         , "salt": salt
-            #         , "sign": sign})
-            # result = json.loads(r.text)
-            # ResultTransaction = "From YouDao\n" + result["translation"][0]
-            # Baidu
-            appKey = '20180418000147886'
-            secretKey = '8tuKIpNnEoAOzrr8mrPn'
-            q = Word
-            fromLang = 'en'
-            toLang = 'zh'
-            salt = random.randint(32768, 65536)
-            sign = appKey + q + str(salt) + secretKey
-            m1 = hashlib.md5()
-            m1.update(sign.encode())
-            sign = m1.hexdigest()
-            r = requests.post("http://api.fanyi.baidu.com/api/trans/vip/translate"
-                              , data={"appid": appKey
-                    , "q": q
-                    , "from": fromLang
-                    , "to": toLang
-                    , "salt": salt
-                    , "sign": sign})
-            result = json.loads(r.text)
-            ResultTransaction = "From BaiDu\n" + result["trans_result"][0]['dst']
-        else:
-            parser = MyHTMLParser()
-            parser.feed(ResultWord[0])
-            ResultTransaction = parser.data
-
-        ClientConnection.sendall(ResultTransaction.encode())
-        ClientConnection.close()
-"""
-
 class CMainApplication(Ui_MainWindow, QtWidgets.QMainWindow):
     def __init__(self):
         super(CMainApplication, self).__init__()
@@ -218,7 +151,6 @@ class CMainApplication(Ui_MainWindow, QtWidgets.QMainWindow):
         self.__switch = True
 
         # Hotkey listener
-
         self.__globalHotKCListener = CGlobalHotKCListener()
         self.__globalHotKCListener.start()
         self.__globalHotKCListener.addTrigger.connect(self.__bStartDescription)
@@ -318,13 +250,16 @@ class CMainApplication(Ui_MainWindow, QtWidgets.QMainWindow):
                 self.__transaction = Transaction
                 self.__word = text
 
-                File=codecs.open('index.html','w','utf-8')
-                File.write(Transaction)
+                File=codecs.open('resources/index.html','w','utf-8')
+                if Transaction[0]!='<':
+                    File.write(HTMLSTATIC1+Transaction+HTMLSTATIC2)
+                else:
+                    File.write(Transaction)
                 File.close()
 
                 # Show the transaction window
                 # self.__transactionWidget.transactionBrowser.setText(self.__transaction)
-                self.__transactionWidget.transactionAx.dynamicCall("Navigate(\"F:/repos/Dict/index.html\")")
+                self.__transactionWidget.transactionAx.dynamicCall("Navigate(str)",BASEDIR+"/resources/index.html")
                 self.__transactionWidget.statusLabel.setText("Search Mode")
                 CursurPoint = QCursor.pos()
                 desktopWidget = QApplication.desktop();
@@ -334,9 +269,10 @@ class CMainApplication(Ui_MainWindow, QtWidgets.QMainWindow):
                 if CursurPoint.y()+400>DesktopPoint.height():
                     CursurPoint.setY(DesktopPoint.height()-400)
                 self.__transactionWidget.move(CursurPoint)
-                self.__transactionWidget.setWindowFlags(self.__transactionWidget.windowFlags() |QtCore.Qt.WindowStaysOnTopHint)
-                self.__transactionWidget.show()
-                self.__transactionWidget.setWindowFlags(QtCore.Qt.Widget)
+                # self.__transactionWidget.setWindowFlags(self.__transactionWidget.windowFlags() |QtCore.Qt.WindowStaysOnTopHint)
+                # self.__transactionWidget.show()
+                # self.__transactionWidget.setWindowFlags(QtCore.Qt.Widget)
+                self.__transactionWidget.activateWindow()
                 self.__transactionWidget.show()
             except Exception as e:
                 print(e)

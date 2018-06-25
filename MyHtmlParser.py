@@ -30,6 +30,11 @@ class MyHTMLParser():
         for PracpronNode in self.__Soup.select("span[class='pracpron']"):
             PracpronNode.decompose()
 
+        # Help
+        for HelpNode in self.__Soup.select("span[class='help']"):
+            HelpNode.decompose()
+
+
         # test=self.__Soup.prettify()
         pass
 
