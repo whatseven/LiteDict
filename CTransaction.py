@@ -20,7 +20,7 @@ class CTransaction(Ui_Transaction, QtWidgets.QMainWindow):
     def event(self,vEvent):
         if vEvent.type()==QEvent.ActivationChange:
             if QApplication.activeWindow()!=self:
-                 # self.hide()
+                self.hide()
                 pass
         #return QWidget.event(vEvent)
         return True

@@ -341,7 +341,6 @@ class CMainApplication(Ui_MainWindow, QtWidgets.QMainWindow):
             except Exception as e:
                 print(e)
 
-
     def incrementButtonPushed(self):
         cn=sqlite3.connect(WORDRECORD)
         cu=cn.cursor()
